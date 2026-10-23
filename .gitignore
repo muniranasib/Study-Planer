@@ -1,9 +1,0 @@
-# Editor / operating system files
-.vscode/
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Local exports and personal backups
-study-space-backup-*.json
-*.local
