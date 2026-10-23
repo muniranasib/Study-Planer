@@ -1,44 +1,68 @@
-# Pink Study Space ♡
+# Study Space ♡
 
-A local-first study planner prototype built for a Generative AI / Vibe Coding assignment.
+Study Space is a calm, responsive semester planner for students. It is built with plain HTML, CSS and JavaScript, requires no account or backend, and can be run with VS Code Live Server or published using GitHub Pages.
 
 ## Features
-- Semester dashboard with subject cards and an aggregated deadline list
-- Create and edit subjects, including semester and exam date
-- Track assignments and course topics
-- Per-subject notes with automatic local saving
-- Pomodoro focus timer with adjustable focus and break lengths
-- Choose a local background image
-- Export and import a JSON backup
 
-## Run locally
-For best results, run the folder through a local web server (rather than opening `index.html` directly), so browser storage works consistently.
+- Overview dashboard with subject counts, upcoming deadlines, completed assignments and learned topics.
+- Create, edit and delete subjects with semester and exam date.
+- Track assignments, reading tasks and other work, including optional due dates and completion status.
+- Collect all dated assignments and exam dates on the Deadlines page.
+- Add topics per subject and check them off to track learning progress.
+- Note library with separate notes, subject/topic fields, search and automatic local saving while typing.
+- Pomodoro timer with focus/break lengths, start, pause, reset and a persistent sidebar countdown.
+- Local background image selection, with a light overlay for readability.
+- JSON export/import backup. Import asks before replacing current data.
 
-### Option 1: Python
-1. Install Python if needed.
-2. Open a terminal in this folder.
-3. Run: `python -m http.server 8000`
-4. Open `http://localhost:8000` in your browser.
+## Project structure
 
-### Option 2: VS Code
-Install the Live Server extension, right-click `index.html`, and choose **Open with Live Server**.
+```text
+Study-Space/
+├── index.html
+├── styles.css
+├── app.js
+├── README.md
+└── .gitignore
+```
+
+## Run on Windows with VS Code
+
+1. Download and extract `Study-Space.zip`.
+2. Open VS Code.
+3. Choose **File → Open Folder…** and select the extracted `Study-Space` folder.
+4. In Extensions, install **Live Server** by Ritwick Dey if it is not already installed.
+5. Open `index.html`, right-click inside the editor and choose **Open with Live Server**.
+6. Your browser will open the app. The Overview should render immediately.
+
+You can also open `index.html` directly in a browser. Live Server is recommended while developing.
+
+## Publish on GitHub Pages
+
+1. Create a new public repository on GitHub, for example `study-space`.
+2. Upload the files in this folder to the repository root (not the ZIP file).
+3. Open **Settings → Pages**.
+4. Under build/deployment, choose **Deploy from a branch**, select `main` and `/ (root)`, then save.
+5. Wait for the deployment to finish and open the Pages URL shown in the settings.
+
+The app is static, so it does not require a server, secrets, login or paid hosting. Google Fonts are optional visual enhancements; if unavailable, local serif/sans-serif fallbacks are used.
 
 ## Local data and privacy
-Subjects, assignments, topics, notes, and background image data are stored in browser storage on this device. They do not automatically sync to other devices. Use **Export backup** regularly. Clearing browser data can remove the local app data.
 
-## Notes
-- Google Fonts are loaded from an external service when internet is available; the app otherwise uses fallback fonts.
-- This prototype does not include cloud sync or automatic course-page importing.
-- Test all features before submitting the assignment.
+Study Space stores subjects, assignments, topics, notes and the selected background in the browser's `localStorage`. The Pomodoro timer state is stored separately so the countdown can continue when its dialog is closed or you navigate to another page.
 
+- Data remains in the same browser profile and origin unless browser site data is cleared.
+- Local data is **not automatically synchronized** across browsers, computers or devices.
+- Export a JSON backup regularly. Import replaces current app data after confirmation.
+- Do not use personal notes in a public demo recording. Use fictional sample data.
+- The selected background is stored in local browser storage; use a reasonably small image.
 
-## Data persistence
-The app saves your subjects, assignments, topics, notes, and background locally in your browser using IndexedDB (with a localStorage fallback). Keep using the same browser and the same local server address. Do not clear browser site data; use Export backup regularly.
+## Troubleshooting
 
+- **Blank page:** Open browser Developer Tools (`F12`) → Console and check for an error. Confirm `app.js` and `styles.css` are next to `index.html`.
+- **Changes do not appear:** Check that Live Server is serving this folder, then reload once.
+- **Storage warning:** Export a backup and remove a very large background image if storage is full.
+- **Timer:** The timer uses the system clock and corrects the displayed remaining time from its target end time. Browser throttling can delay the exact moment the interface updates while the tab is inactive, but the displayed time is recalculated on the next tick.
 
-## Version 3 change
-- Removed only the Pomodoro/focus countdown card from the right-hand side of the overview dashboard. The persistent Pomodoro timer in the left sidebar remains. All other features are unchanged.
+## Demo video
 
-
-## Version 3 change
-The extra Pomodoro button in the top-right header has been removed. The persistent Pomodoro timer in the left sidebar remains, and all other app features are retained.
+For a public YouTube demonstration, create fictional subjects and notes in a separate browser profile, record the workflow, and avoid showing your personal browser data or private notes.
