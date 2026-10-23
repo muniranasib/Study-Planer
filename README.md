@@ -5,9 +5,9 @@ Study Space is a calm, responsive semester planner for students. It is built wit
 ## Features
 
 - Overview dashboard with subject counts, upcoming deadlines, completed assignments and learned topics.
-- Create, edit and delete subjects with semester and exam date.
+- Create, edit and delete subjects with semester, exam date and a soft pastel colour for each subject.
 - Track assignments, reading tasks and other work, including optional due dates and completion status.
-- Collect all dated assignments and exam dates on the Deadlines page.
+- Deadlines page with three filters: **All**, **Due** (not completed) and **Complete**.
 - Add topics per subject and check them off to track learning progress.
 - Note library with separate notes, subject/topic fields, search and automatic local saving while typing.
 - Pomodoro timer with focus/break lengths, start, pause, reset and a persistent sidebar countdown.

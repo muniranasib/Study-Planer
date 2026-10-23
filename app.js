@@ -12,9 +12,9 @@
   };
   const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch]));
   const formatDate = value => {
-    if (!value) return "Ingen dato";
+    if (!value) return "No date";
     const d = new Date(`${value}T12:00:00`);
-    return Number.isNaN(d.getTime()) ? "Ugyldig dato" : new Intl.DateTimeFormat("no-NO", {day:"numeric", month:"short", year:"numeric"}).format(d);
+    return Number.isNaN(d.getTime()) ? "Invalid date" : new Intl.DateTimeFormat("no-NO", {day:"numeric", month:"short", year:"numeric"}).format(d);
   };
   const daysUntil = value => {
     if (!value) return null;
@@ -45,8 +45,8 @@
       }
       return { ...defaultData(), ...parsed };
     } catch (error) {
-      setSaveStatus("error", "Kunne ikke lese lagrede data");
-      showToast("Kunne ikke lese data: " + error.message);
+      setSaveStatus("error", "Could not read saved data");
+      showToast("Could not read data: " + error.message);
       return defaultData();
     }
   }
@@ -56,8 +56,8 @@
       setSaveStatus("ok", "Saved on this device");
       return true;
     } catch (error) {
-      setSaveStatus("error", "Lagring feilet");
-      showToast("Kunne ikke lagre data. Eksporter en sikkerhetskopi og kontroller nettleserens lagringsplass.");
+      setSaveStatus("error", "Saving failed");
+      showToast("Could not save data. Export a backup and check your browser storage space.");
       return false;
     }
   }
@@ -85,16 +85,15 @@
   }
   function subjectName(id) { return subjectById(id)?.name || "Uten fag"; }
   function allDeadlines() {
-    const taskItems = data.tasks.filter(t => t.dueDate).map(t => ({ id:t.id, date:t.dueDate, title:t.title, subjectId:t.subjectId, done:t.done, kind:t.type || "Oppgave", source:"task" }));
-    const examItems = data.subjects.filter(s => s.examDate).map(s => ({ id:s.id, date:s.examDate, title:`Eksamen: ${s.name}`, subjectId:s.id, done:false, kind:"Eksamen", source:"exam" }));
+    const taskItems = data.tasks.filter(t => t.dueDate).map(t => ({ id:t.id, date:t.dueDate, title:t.title, subjectId:t.subjectId, done:t.done, kind:t.type || "Assignment", source:"task" }));
+    const examItems = data.subjects.filter(s => s.examDate).map(s => ({ id:s.id, date:s.examDate, title:`Exam: ${s.name}`, subjectId:s.id, done:false, kind:"Exam", source:"exam" }));
     return [...taskItems, ...examItems].sort((a,b) => a.date.localeCompare(b.date));
   }
-  function visibleDeadlines(filter = "upcoming") {
+  function visibleDeadlines(filter = "due") {
     const today = todayISO();
     return allDeadlines().filter(item => {
-      if (filter === "remaining") return !item.done;
+      if (filter === "due") return !item.done;
       if (filter === "completed") return item.done;
-      if (filter === "upcoming") return !item.done && item.date >= today;
       return true;
     });
   }
@@ -104,8 +103,8 @@
   }
   function deadlineHTML(item) {
     const delta = daysUntil(item.date);
-    const dateText = delta === null ? formatDate(item.date) : delta < 0 ? `${Math.abs(delta)} dager siden` : delta === 0 ? "I dag" : `Om ${delta} dager`;
-    return `<div class="deadline-item">${dateBadge(item.date)}<div class="deadline-info"><strong>${escapeHTML(item.title)}</strong><small>${escapeHTML(subjectName(item.subjectId))} · ${escapeHTML(item.kind)} · ${escapeHTML(dateText)}</small></div>${item.done ? '<span class="pill success">Fullført</span>' : delta !== null && delta >= 0 && delta <= 7 ? '<span class="pill warning">Snart</span>' : ""}</div>`;
+    const dateText = delta === null ? formatDate(item.date) : delta < 0 ? `${Math.abs(delta)} days ago` : delta === 0 ? "I dag" : `In ${delta} days`;
+    return `<div class="deadline-item">${dateBadge(item.date)}<div class="deadline-info"><strong>${escapeHTML(item.title)}</strong><small>${escapeHTML(subjectName(item.subjectId))} · ${escapeHTML(item.kind)} · ${escapeHTML(dateText)}</small></div>${item.done ? '<span class="pill success">Complete</span>' : delta !== null && delta >= 0 && delta <= 7 ? '<span class="pill warning">Snart</span>' : ""}</div>`;
   }
   function emptyState(icon, title, body, buttonText, action) {
     return `<div class="empty-state"><div class="empty-icon">${icon}</div><h3>${title}</h3><p>${body}</p>${buttonText ? `<button class="button button-primary" data-action="${action}">${buttonText}</button>` : ""}</div>`;
@@ -115,17 +114,17 @@
     const topicCount = topicsFor(s.id).length;
     const doneTasks = tasks.filter(t => t.done).length;
     const progress = topicProgress(s.id);
-    return `<article class="subject-card" data-open-subject="${s.id}" tabindex="0" role="button" aria-label="Åpne ${escapeHTML(s.name)}">
+    return `<article class="subject-card subject-color-${escapeHTML(s.color||"rose")}" data-open-subject="${s.id}" tabindex="0" role="button" aria-label="Åpne ${escapeHTML(s.name)}">
       <div class="subject-card-top"><span class="subject-symbol">♡</span><button class="subject-menu" data-action="subject-menu" data-id="${s.id}" aria-label="Fagvalg">···</button></div>
-      <h3>${escapeHTML(s.name)}</h3><div class="subject-meta">${escapeHTML(s.semester || "Semester ikke angitt")}<br>${tasks.length} oppgaver · ${doneTasks} fullført</div>
-      <div class="progress-row"><span>Temaer lært · ${topicCount} temaer</span><strong>${progress}%</strong></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <h3>${escapeHTML(s.name)}</h3><div class="subject-meta">${escapeHTML(s.semester || "Semester not set")}<br>${tasks.length} tasks · ${doneTasks} completed</div>
+      <div class="progress-row"><span>Topics learned · ${topicCount} topics</span><strong>${progress}%</strong></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div>
     </article>`;
   }
   function renderOverview() {
-    const upcoming = visibleDeadlines("upcoming").slice(0,4);
+    const upcoming = visibleDeadlines("due").filter(item => item.date >= todayISO()).slice(0,4);
     const completed = data.tasks.filter(t => t.done).length;
     const learned = data.topics.filter(t => t.done).length;
-    const dueCount = visibleDeadlines("upcoming").length;
+    const dueCount = visibleDeadlines("due").filter(item => item.date >= todayISO()).length;
     return `<section class="hero"><div><p class="eyebrow">A SOFTER WAY TO STUDY</p><h1>Welcome to your study space <span class="heart">♡</span></h1><p class="hero-subtitle">One little step at a time. Your semester, all in one place.</p></div><div class="hero-actions"><button class="button" data-action="customize">✿ Customize</button><button class="button button-primary" data-action="add-subject">＋ Add subject</button></div></section>
       <section class="stats-grid">
         <div class="stat-card"><span class="stat-icon">▤</span><div><div class="stat-label">My subjects</div><div class="stat-value">${data.subjects.length}</div></div></div>
@@ -135,7 +134,7 @@
       </section>
       <section class="dashboard-grid">
         <div class="panel"><div class="panel-header"><div><h2 class="panel-title">My subjects</h2><p class="panel-subtitle">Your semester at a glance</p></div><button class="text-button" data-page="subjects">View all ↗</button></div>
-          ${data.subjects.length ? `<div class="subject-grid">${data.subjects.slice(0,4).map(subjectCard).join("")}</div>` : emptyState("♡","Your semester starts here","Legg til ditt første fag for å samle oppgaver, eksamensdatoer, temaer og notater på ett sted.","Add your first subject","add-subject")}
+          ${data.subjects.length ? `<div class="subject-grid">${data.subjects.slice(0,4).map(subjectCard).join("")}</div>` : emptyState("♡","Your semester starts here","Add your first subject to bring assignments, exam dates, topics and notes together in one place.","Add your first subject","add-subject")}
         </div>
         <div class="panel"><div class="panel-header"><div><h2 class="panel-title">Coming up</h2><p class="panel-subtitle">Deadlines to keep in mind</p></div><button class="text-button" data-page="deadlines">All ↗</button></div>
           ${upcoming.length ? `<div class="deadline-list">${upcoming.map(deadlineHTML).join("")}</div>` : emptyState("✿","Nothing due just yet","Add assignment dates to see upcoming deadlines here.","Add an assignment","add-task")}
@@ -144,52 +143,52 @@
   }
   function renderSubjects() {
     return `<div class="section-heading"><div><p class="eyebrow">YOUR SEMESTER</p><h1>My subjects <span class="heart">♡</span></h1><p>All your courses, gathered in one calm place.</p></div><button class="button button-primary" data-action="add-subject">＋ Add subject</button></div>
-    ${data.subjects.length ? `<div class="subject-grid">${data.subjects.map(subjectCard).join("")}</div>` : emptyState("♡","No subjects yet","Opprett et fag for å komme i gang med semesterplanen din.","Add subject","add-subject")}`;
+    ${data.subjects.length ? `<div class="subject-grid">${data.subjects.map(subjectCard).join("")}</div>` : emptyState("♡","No subjects yet","Create a subject to start planning your semester.","Add subject","add-subject")}`;
   }
   function renderDeadlines() {
     const items = visibleDeadlines(deadlineFilter);
-    return `<div class="section-heading"><div><p class="eyebrow">STAY GENTLY ON TRACK</p><h1>Deadlines <span class="heart">♡</span></h1><p>Innleveringer og eksamensdatoer på tvers av fagene dine.</p></div><button class="button button-primary" data-action="add-task">＋ Add assignment</button></div>
-    <div class="filter-row">${[["upcoming","Kommende"],["remaining","Gjenstår"],["completed","Fullført"],["all","Alle med dato"]].map(([v,l])=>`<button class="filter-chip ${deadlineFilter===v?"active":""}" data-filter="${v}">${l}</button>`).join("")}</div>
-    <div class="panel">${items.length ? `<div class="deadline-list">${items.map(item => item.source==="task" ? `<div class="deadline-item">${dateBadge(item.date)}<input class="check-input" type="checkbox" data-toggle-task="${item.id}" ${item.done?"checked":""} aria-label="Marker fullført"><div class="deadline-info"><strong class="${item.done?"done-text":""}">${escapeHTML(item.title)}</strong><small>${escapeHTML(subjectName(item.subjectId))} · ${escapeHTML(item.kind)} · ${formatDate(item.date)}</small></div><button class="small-icon" data-action="edit-task" data-id="${item.id}" aria-label="Rediger">✎</button></div>` : deadlineHTML(item)).join("")}</div>` : emptyState("▦","No deadlines here","Legg til frister på oppgaver eller registrer eksamensdato på et fag.", "Add assignment","add-task")}</div>`;
+    return `<div class="section-heading"><div><p class="eyebrow">STAY GENTLY ON TRACK</p><h1>Deadlines <span class="heart">♡</span></h1><p>Assignments and exam dates across all your subjects.</p></div><button class="button button-primary" data-action="add-task">＋ Add assignment</button></div>
+    <div class="filter-row">${[["all","All"],["due","Due"],["completed","Complete"]].map(([v,l])=>`<button class="filter-chip ${deadlineFilter===v?"active":""}" data-filter="${v}">${l}</button>`).join("")}</div>
+    <div class="panel">${items.length ? `<div class="deadline-list">${items.map(item => item.source==="task" ? `<div class="deadline-item">${dateBadge(item.date)}<input class="check-input" type="checkbox" data-toggle-task="${item.id}" ${item.done?"checked":""} aria-label="Marker completed"><div class="deadline-info"><strong class="${item.done?"done-text":""}">${escapeHTML(item.title)}</strong><small>${escapeHTML(subjectName(item.subjectId))} · ${escapeHTML(item.kind)} · ${formatDate(item.date)}</small></div><button class="small-icon" data-action="edit-task" data-id="${item.id}" aria-label="Rediger">✎</button></div>` : deadlineHTML(item)).join("")}</div>` : emptyState("▦","No deadlines here","Add assignment due dates or set an exam date for a subject.", "Add assignment","add-task")}</div>`;
   }
   function renderNotes() {
     const q = noteSearch.trim().toLocaleLowerCase("no");
     const notes = notesFor().filter(n => `${n.title} ${n.content} ${n.topic || ""} ${subjectName(n.subjectId)}`.toLocaleLowerCase("no").includes(q));
     return `<div class="section-heading"><div><p class="eyebrow">YOUR NOTE LIBRARY</p><h1>Notes <span class="heart">♡</span></h1><p>Forelesninger, ideer og pensum – samlet og søkbart.</p></div><button class="button button-primary" data-action="new-note">＋ New note</button></div>
     <div class="field"><input class="search-input" id="noteSearch" type="search" placeholder="Søk i titler, innhold, fag og tema …" value="${escapeHTML(noteSearch)}" aria-label="Søk i notater"></div>
-    ${notes.length ? `<div class="note-grid">${notes.map(n=>`<article class="note-card" data-open-note="${n.id}" tabindex="0" role="button"><span class="pill">${escapeHTML(subjectName(n.subjectId))}</span><h3>${escapeHTML(n.title || "Untitled note")}</h3><p>${escapeHTML(n.topic || "Ingen tema angitt")}<br>${escapeHTML((n.content||"").slice(0,150))}${(n.content||"").length>150?"…":""}</p><small class="muted">${n.updatedAt ? `Oppdatert ${new Date(n.updatedAt).toLocaleDateString("no-NO")}` : ""}</small></article>`).join("")}</div>` : emptyState("✎",q?"No notes found":"Your notes live here","Opprett notater under fagene dine. Innholdet lagres automatisk mens du skriver.", "Create a note","new-note")}`;
+    ${notes.length ? `<div class="note-grid">${notes.map(n=>`<article class="note-card" data-open-note="${n.id}" tabindex="0" role="button"><span class="pill">${escapeHTML(subjectName(n.subjectId))}</span><h3>${escapeHTML(n.title || "Untitled note")}</h3><p>${escapeHTML(n.topic || "No topic added")}<br>${escapeHTML((n.content||"").slice(0,150))}${(n.content||"").length>150?"…":""}</p><small class="muted">${n.updatedAt ? `Oppdatert ${new Date(n.updatedAt).toLocaleDateString("no-NO")}` : ""}</small></article>`).join("")}</div>` : emptyState("✎",q?"No notes found":"Your notes live here","Create notes for your subjects. Your content is saved automatically as you type.", "Create a note","new-note")}`;
   }
   function renderSubjectDetail() {
     const s = subjectById(currentSubjectId);
     if (!s) { currentPage = "subjects"; return renderSubjects(); }
     const delta = daysUntil(s.examDate);
-    const examLine = s.examDate ? `Eksamen ${formatDate(s.examDate)}${delta === null ? "" : delta < 0 ? ` · ${Math.abs(delta)} dager siden` : delta === 0 ? " · Eksamen i dag" : ` · ${delta} dager igjen`}` : "Ingen eksamensdato registrert";
+    const examLine = s.examDate ? `Exam ${formatDate(s.examDate)}${delta === null ? "" : delta < 0 ? ` · ${Math.abs(delta)} days ago` : delta === 0 ? " · Exam i dag" : ` · ${delta} days left`}` : "No exam date added";
     const tabs = [["tasks","Assignments"],["topics","Topics"],["notes","Notes"]];
     let content = "";
     if (subjectTab === "tasks") {
       const list = tasksFor(s.id);
-      content = `<div class="panel"><div class="panel-header"><div><h2 class="panel-title">Assignments & tasks</h2><p class="panel-subtitle">Hold oversikt over det du skal gjøre.</p></div><button class="button button-primary" data-action="add-task" data-subject="${s.id}">＋ Add task</button></div>
-      ${list.length ? list.sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999")).map(t=>`<div class="list-card ${t.done?"done":""}"><input class="check-input" type="checkbox" data-toggle-task="${t.id}" ${t.done?"checked":""} aria-label="Marker ${escapeHTML(t.title)} fullført"><div class="list-main"><strong>${escapeHTML(t.title)}</strong><p>${escapeHTML(t.type)} · ${t.dueDate ? "Frist: "+formatDate(t.dueDate) : "Ingen frist"} · ${t.done?"Fullført":"Gjenstår"}</p></div><div class="list-actions"><button class="small-icon" data-action="edit-task" data-id="${t.id}" aria-label="Rediger oppgave">✎</button><button class="small-icon" data-action="delete-task" data-id="${t.id}" aria-label="Slett oppgave">×</button></div></div>`).join("") : emptyState("♡","A little at a time","Legg til innleveringer, oppgaver eller leseoppgaver.","Add task","add-task")}</div>`;
+      content = `<div class="panel"><div class="panel-header"><div><h2 class="panel-title">Assignments & tasks</h2><p class="panel-subtitle">Keep track of what you need to do.</p></div><button class="button button-primary" data-action="add-task" data-subject="${s.id}">＋ Add task</button></div>
+      ${list.length ? list.sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999")).map(t=>`<div class="list-card ${t.done?"done":""}"><input class="check-input" type="checkbox" data-toggle-task="${t.id}" ${t.done?"checked":""} aria-label="Marker ${escapeHTML(t.title)} completed"><div class="list-main"><strong>${escapeHTML(t.title)}</strong><p>${escapeHTML(t.type)} · ${t.dueDate ? "Due: "+formatDate(t.dueDate) : "No due date"} · ${t.done?"Complete":"Due"}</p></div><div class="list-actions"><button class="small-icon" data-action="edit-task" data-id="${t.id}" aria-label="Rediger oppgave">✎</button><button class="small-icon" data-action="delete-task" data-id="${t.id}" aria-label="Delete oppgave">×</button></div></div>`).join("") : emptyState("♡","A little at a time","Add assignments, tasks or reading tasks.","Add task","add-task")}</div>`;
     } else if (subjectTab === "topics") {
       const list = topicsFor(s.id);
-      content = `<div class="panel"><div class="panel-header"><div><h2 class="panel-title">Topics learned</h2><p class="panel-subtitle">${list.filter(t=>t.done).length} av ${list.length} temaer fullført · ${topicProgress(s.id)}%</p></div><button class="button button-primary" data-action="add-topic" data-subject="${s.id}">＋ Add topic</button></div><div class="progress-track" style="height:8px;margin-bottom:20px"><div class="progress-fill" style="width:${topicProgress(s.id)}%"></div></div>
-      ${list.length ? list.map(t=>`<div class="list-card ${t.done?"done":""}"><input class="check-input" type="checkbox" data-toggle-topic="${t.id}" ${t.done?"checked":""} aria-label="Marker tema lært"><div class="list-main"><strong>${escapeHTML(t.title)}</strong><p>${t.done?"Lært ♡":"Ikke markert som lært"}</p></div><button class="small-icon" data-action="delete-topic" data-id="${t.id}" aria-label="Slett tema">×</button></div>`).join("") : emptyState("✧","Your learning journey","Legg inn temaene fra pensum og kryss av etter hvert som du lærer dem.","Add topic","add-topic")}</div>`;
+      content = `<div class="panel"><div class="panel-header"><div><h2 class="panel-title">Topics learned</h2><p class="panel-subtitle">${list.filter(t=>t.done).length} av ${list.length} topics completed · ${topicProgress(s.id)}%</p></div><button class="button button-primary" data-action="add-topic" data-subject="${s.id}">＋ Add topic</button></div><div class="progress-track" style="height:8px;margin-bottom:20px"><div class="progress-fill" style="width:${topicProgress(s.id)}%"></div></div>
+      ${list.length ? list.map(t=>`<div class="list-card ${t.done?"done":""}"><input class="check-input" type="checkbox" data-toggle-topic="${t.id}" ${t.done?"checked":""} aria-label="Mark topic as learned"><div class="list-main"><strong>${escapeHTML(t.title)}</strong><p>${t.done?"Learned ♡":"Not marked as learned"}</p></div><button class="small-icon" data-action="delete-topic" data-id="${t.id}" aria-label="Delete topic">×</button></div>`).join("") : emptyState("✧","Your learning journey","Add syllabus topics and check them off as you learn.","Add topic","add-topic")}</div>`;
     } else {
       const list = notesFor(s.id);
-      content = `<div class="panel"><div class="panel-header"><div><h2 class="panel-title">Notes for ${escapeHTML(s.name)}</h2><p class="panel-subtitle">Notater lagres automatisk mens du skriver.</p></div><button class="button button-primary" data-action="new-note" data-subject="${s.id}">＋ New note</button></div>${list.length ? `<div class="note-grid">${list.map(n=>`<article class="note-card" data-open-note="${n.id}" tabindex="0" role="button"><span class="pill">${escapeHTML(n.topic||"Note")}</span><h3>${escapeHTML(n.title)}</h3><p>${escapeHTML((n.content||"").slice(0,140))}</p></article>`).join("")}</div>` : emptyState("✎","No notes for this subject","Lag ditt første notat for faget.","New note","new-note")}</div>`;
+      content = `<div class="panel"><div class="panel-header"><div><h2 class="panel-title">Notes for ${escapeHTML(s.name)}</h2><p class="panel-subtitle">Notes are saved automatically as you type.</p></div><button class="button button-primary" data-action="new-note" data-subject="${s.id}">＋ New note</button></div>${list.length ? `<div class="note-grid">${list.map(n=>`<article class="note-card" data-open-note="${n.id}" tabindex="0" role="button"><span class="pill">${escapeHTML(n.topic||"Note")}</span><h3>${escapeHTML(n.title)}</h3><p>${escapeHTML((n.content||"").slice(0,140))}</p></article>`).join("")}</div>` : emptyState("✎","No notes for this subject","Lag ditt første notat for faget.","New note","new-note")}</div>`;
     }
     return `<button class="back-link" data-page="subjects">← Back to all subjects</button>
-      <section class="detail-hero"><div class="section-heading" style="margin:0"><div><p class="eyebrow">${escapeHTML(s.semester||"YOUR SUBJECT")}</p><h1>${escapeHTML(s.name)} <span class="heart">♡</span></h1><div class="detail-meta"><span>▦ ${escapeHTML(examLine)}</span><span>·</span><span>${topicProgress(s.id)}% av temaene lært</span></div></div><div class="inline-actions"><button class="button" data-action="edit-subject" data-id="${s.id}">✎ Edit subject</button><button class="button" data-action="subject-menu" data-id="${s.id}">···</button></div></div></section>
+      <section class="detail-hero"><div class="section-heading" style="margin:0"><div><p class="eyebrow">${escapeHTML(s.semester||"YOUR SUBJECT")}</p><h1>${escapeHTML(s.name)} <span class="heart">♡</span></h1><div class="detail-meta"><span>▦ ${escapeHTML(examLine)}</span><span>·</span><span>${topicProgress(s.id)}% of topics learned</span></div></div><div class="inline-actions"><button class="button" data-action="edit-subject" data-id="${s.id}">✎ Edit subject</button><button class="button" data-action="subject-menu" data-id="${s.id}">···</button></div></div></section>
       <div class="detail-tabs">${tabs.map(([v,l])=>`<button class="detail-tab ${subjectTab===v?"active":""}" data-subject-tab="${v}">${l}${v==="tasks"?" ("+tasksFor(s.id).length+")":v==="topics"?" ("+topicsFor(s.id).length+")":" ("+notesFor(s.id).length+")"}</button>`).join("")}</div>${content}`;
   }
   function renderNoteEditor() {
     const n = data.notes.find(x=>x.id===currentNoteId);
     if (!n) { currentPage = "notes"; return renderNotes(); }
     return `<button class="back-link" data-page="${currentSubjectId ? "subject-detail" : "notes"}">← Back to ${currentSubjectId ? "subject" : "notes"}</button>
-      <div class="section-heading"><div><p class="eyebrow">NOTEBOOK / AUTO-SAVED</p><h1>Edit note <span class="heart">♡</span></h1><p>Endringer lagres automatisk på denne enheten.</p></div><button class="button button-danger" data-action="delete-note" data-id="${n.id}">Delete note</button></div>
-      <div class="panel note-form"><div class="field"><label for="noteTitle">Note title</label><input id="noteTitle" data-note-field="title" value="${escapeHTML(n.title)}" placeholder="For eksempel: Forelesning 3 – maskinlæring"></div>
+      <div class="section-heading"><div><p class="eyebrow">NOTEBOOK / AUTO-SAVED</p><h1>Edit note <span class="heart">♡</span></h1><p>Changes are saved automatically on this device.</p></div><button class="button button-danger" data-action="delete-note" data-id="${n.id}">Delete note</button></div>
+      <div class="panel note-form"><div class="field"><label for="noteTitle">Note title</label><input id="noteTitle" data-note-field="title" value="${escapeHTML(n.title)}" placeholder="e.g. Lecture 3 – machine learning"></div>
       <div class="form-grid"><div class="field"><label for="noteSubject">Subject</label><select id="noteSubject" data-note-field="subjectId"><option value="">Uten fag</option>${data.subjects.map(s=>`<option value="${s.id}" ${n.subjectId===s.id?"selected":""}>${escapeHTML(s.name)}</option>`).join("")}</select></div><div class="field"><label for="noteTopic">Lecture / topic (optional)</label><input id="noteTopic" data-note-field="topic" value="${escapeHTML(n.topic||"")}" placeholder="Kapittel, forelesning eller tema"></div></div>
-      <div class="field"><label for="noteContent">Your notes</label><textarea id="noteContent" data-note-field="content" rows="18" placeholder="Skriv notatene dine her …">${escapeHTML(n.content||"")}</textarea></div><div class="right muted" id="noteSaveLabel">Saved on this device</div></div>`;
+      <div class="field"><label for="noteContent">Your notes</label><textarea id="noteContent" data-note-field="content" rows="18" placeholder="Write your notes here …">${escapeHTML(n.content||"")}</textarea></div><div class="right muted" id="noteSaveLabel">Saved on this device</div></div>`;
   }
   function renderPage() {
     const content = $("#pageContent");
@@ -226,44 +225,45 @@
     $("#modalBody").innerHTML = "";
   }
   function subjectOptions(selected="") {
-    return `<option value="">Velg fag (valgfritt)</option>${data.subjects.map(s=>`<option value="${s.id}" ${s.id===selected?"selected":""}>${escapeHTML(s.name)}</option>`).join("")}`;
+    return `<option value="">Choose subject (optional)</option>${data.subjects.map(s=>`<option value="${s.id}" ${s.id===selected?"selected":""}>${escapeHTML(s.name)}</option>`).join("")}`;
   }
   function showSubjectForm(id=null) {
     const s = id ? subjectById(id) : null;
     openModal(s?"Edit subject":"Add a subject", `<form id="subjectForm">
-      <div class="field"><label for="subjectName">Fagnavn *</label><input id="subjectName" name="name" required maxlength="120" value="${escapeHTML(s?.name||"")}" placeholder="For eksempel: Introduksjon til KI"></div>
+      <div class="field"><label for="subjectName">Subject name *</label><input id="subjectName" name="name" required maxlength="120" value="${escapeHTML(s?.name||"")}" placeholder="e.g. Introduction to AI"></div>
       <div class="field"><label for="semester">Semester</label><input id="semester" name="semester" value="${escapeHTML(s?.semester||"Autumn 2026")}" placeholder="Autumn 2026"></div>
-      <div class="field"><label for="examDate">Eksamensdato</label><input id="examDate" name="examDate" type="date" value="${escapeHTML(s?.examDate||"")}"></div>
+      <div class="field"><label for="examDate">Exam date</label><input id="examDate" name="examDate" type="date" value="${escapeHTML(s?.examDate||"")}"></div>
+      <div class="field"><label for="subjectColor">Subject colour</label><select id="subjectColor" name="color">${[["rose","Soft rose"],["lilac","Lilac"],["blue","Powder blue"],["sage","Sage green"],["peach","Peach"],["butter","Butter yellow"]].map(([v,l])=>`<option value="${v}" ${(s?.color||"rose")===v?"selected":""}>${l}</option>`).join("")}</select></div>
       <div class="form-actions"><button type="button" class="button" data-close-modal>Cancel</button><button class="button button-primary" type="submit">Save subject</button></div></form>`);
     $("#subjectForm").addEventListener("submit", e=>{
       e.preventDefault(); const fd=new FormData(e.currentTarget);
       const name=String(fd.get("name")||"").trim(); if(!name) return;
-      if(s) Object.assign(s,{name,semester:String(fd.get("semester")||"").trim(),examDate:String(fd.get("examDate")||"")});
-      else data.subjects.push({id:uid(),name,semester:String(fd.get("semester")||"").trim(),examDate:String(fd.get("examDate")||"")});
-      saveData(); closeModal(); renderPage(); showToast(s?"Faget er oppdatert ♡":"Faget er lagt til ♡");
+      if(s) Object.assign(s,{name,semester:String(fd.get("semester")||"").trim(),examDate:String(fd.get("examDate")||""),color:String(fd.get("color")||"rose")});
+      else data.subjects.push({id:uid(),name,semester:String(fd.get("semester")||"").trim(),examDate:String(fd.get("examDate")||""),color:String(fd.get("color")||"rose")});
+      saveData(); closeModal(); renderPage(); showToast(s?"Subject updated ♡":"Subject added ♡");
     });
   }
   function showTaskForm(id=null, subjectId=null) {
     const t=id?data.tasks.find(x=>x.id===id):null;
     const preset=subjectId||currentSubjectId||"";
     openModal(t?"Edit assignment":"Add an assignment", `<form id="taskForm">
-      <div class="field"><label for="taskTitle">Title *</label><input id="taskTitle" name="title" required maxlength="180" value="${escapeHTML(t?.title||"")}" placeholder="For eksempel: Les kapittel 4"></div>
-      <div class="form-grid"><div class="field"><label for="taskSubject">Subject</label><select id="taskSubject" name="subjectId">${subjectOptions(t?.subjectId||preset)}</select></div><div class="field"><label for="taskType">Type</label><select id="taskType" name="type">${["Innlevering","Oppgave","Leseoppgave","Eksamen","Annet"].map(x=>`<option ${x===(t?.type||"Innlevering")?"selected":""}>${x}</option>`).join("")}</select></div></div>
-      <div class="field"><label for="taskDate">Frist (valgfritt)</label><input id="taskDate" name="dueDate" type="date" value="${escapeHTML(t?.dueDate||"")}"></div>
-      <div class="field"><label><input type="checkbox" name="done" ${t?.done?"checked":""}> Markert som fullført</label></div>
+      <div class="field"><label for="taskTitle">Title *</label><input id="taskTitle" name="title" required maxlength="180" value="${escapeHTML(t?.title||"")}" placeholder="e.g. Read chapter 4"></div>
+      <div class="form-grid"><div class="field"><label for="taskSubject">Subject</label><select id="taskSubject" name="subjectId">${subjectOptions(t?.subjectId||preset)}</select></div><div class="field"><label for="taskType">Type</label><select id="taskType" name="type">${["Assignment","Assignment","Reading","Exam","Other"].map(x=>`<option ${x===(t?.type||"Assignment")?"selected":""}>${x}</option>`).join("")}</select></div></div>
+      <div class="field"><label for="taskDate">Due date (optional)</label><input id="taskDate" name="dueDate" type="date" value="${escapeHTML(t?.dueDate||"")}"></div>
+      <div class="field"><label><input type="checkbox" name="done" ${t?.done?"checked":""}> Markert som completed</label></div>
       <div class="form-actions"><button type="button" class="button" data-close-modal>Cancel</button><button class="button button-primary" type="submit">Save assignment</button></div></form>`);
     $("#taskForm").addEventListener("submit", e=>{
       e.preventDefault(); const fd=new FormData(e.currentTarget); const title=String(fd.get("title")||"").trim(); if(!title)return;
-      const record={title,subjectId:String(fd.get("subjectId")||""),type:String(fd.get("type")||"Oppgave"),dueDate:String(fd.get("dueDate")||""),done:fd.get("done")==="on"};
+      const record={title,subjectId:String(fd.get("subjectId")||""),type:String(fd.get("type")||"Assignment"),dueDate:String(fd.get("dueDate")||""),done:fd.get("done")==="on"};
       if(t) Object.assign(t,record); else data.tasks.push({id:uid(),...record});
-      saveData(); closeModal(); renderPage(); showToast("Oppgaven er lagret ♡");
+      saveData(); closeModal(); renderPage(); showToast("Assignmentn er lagret ♡");
     });
   }
   function showTopicForm(subjectId=null) {
     const s=subjectById(subjectId||currentSubjectId);
-    if(!s) { showToast("Velg et fag først."); return; }
-    openModal("Add a topic", `<form id="topicForm"><p class="muted">Fag: ${escapeHTML(s.name)}</p><div class="field"><label for="topicTitle">Tema *</label><input id="topicTitle" name="title" required maxlength="180" placeholder="For eksempel: Nevrale nettverk"></div><div class="form-actions"><button type="button" class="button" data-close-modal>Cancel</button><button class="button button-primary" type="submit">Add topic</button></div></form>`);
-    $("#topicForm").addEventListener("submit",e=>{e.preventDefault();const title=String(new FormData(e.currentTarget).get("title")||"").trim();if(!title)return;data.topics.push({id:uid(),subjectId:s.id,title,done:false});saveData();closeModal();renderPage();showToast("Tema lagt til ♡");});
+    if(!s) { showToast("Choose a subject first."); return; }
+    openModal("Add a topic", `<form id="topicForm"><p class="muted">Subject: ${escapeHTML(s.name)}</p><div class="field"><label for="topicTitle">Topic *</label><input id="topicTitle" name="title" required maxlength="180" placeholder="e.g. Neural networks"></div><div class="form-actions"><button type="button" class="button" data-close-modal>Cancel</button><button class="button button-primary" type="submit">Add topic</button></div></form>`);
+    $("#topicForm").addEventListener("submit",e=>{e.preventDefault();const title=String(new FormData(e.currentTarget).get("title")||"").trim();if(!title)return;data.topics.push({id:uid(),subjectId:s.id,title,done:false});saveData();closeModal();renderPage();showToast("Topic added ♡");});
   }
   function createNote(subjectId="") {
     const note={id:uid(),title:"",subjectId:subjectId||"",topic:"",content:"",createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
@@ -287,21 +287,21 @@
   }
   function deleteNote(id) {
     const n=data.notes.find(x=>x.id===id);
-    if(!n || !confirm(`Slette notatet «${n.title||"Untitled note"}»? Dette kan ikke angres.`))return;
-    data.notes=data.notes.filter(x=>x.id!==id);saveData();closeModal();currentNoteId=null;navigate(currentSubjectId?"subject-detail":"notes");showToast("Notatet er slettet.");
+    if(!n || !confirm(`Delete notatet «${n.title||"Untitled note"}»? This cannot be undone.`))return;
+    data.notes=data.notes.filter(x=>x.id!==id);saveData();closeModal();currentNoteId=null;navigate(currentSubjectId?"subject-detail":"notes");showToast("Note deleted.");
   }
   function showCustomize() {
-    openModal("Customize your space", `<p class="muted">Velg et bilde fra PC-en. Bildet lagres lokalt i denne nettleseren. Store bilder kan overskride nettleserens lagringsgrense.</p>
+    openModal("Customize your space", `<p class="muted">Choose an image from your computer. The image is stored locally in this browser. Large images may exceed browser storage limits.</p>
       <div class="field"><label for="backgroundFile">Background image</label><input type="file" id="backgroundFile" accept="image/*"></div>
-      <div class="settings-preview">${data.background?`<img class="bg-thumb" src="${data.background}" alt="Valgt bakgrunn">`:`<div class="bg-thumb"></div>`}<div><strong>${data.background?"Custom background selected":"Soft pink default"}</strong><p class="muted" style="margin:4px 0 0">Et lyst lag beholdes over bildet for lesbarhet.</p></div></div>
+      <div class="settings-preview">${data.background?`<img class="bg-thumb" src="${data.background}" alt="Valgt bakgrunn">`:`<div class="bg-thumb"></div>`}<div><strong>${data.background?"Custom background selected":"Soft pink default"}</strong><p class="muted" style="margin:4px 0 0">A light overlay stays over the image for readability.</p></div></div>
       <div class="form-actions"><button type="button" class="button button-danger" data-action="remove-background">Remove background</button><button type="button" class="button" data-close-modal>Close</button></div>`);
     $("#backgroundFile").addEventListener("change",e=>{
       const file=e.target.files?.[0];if(!file)return;
-      if(!file.type.startsWith("image/")){showToast("Velg en bildefil.");return;}
-      if(file.size>3*1024*1024){showToast("Bildet er større enn 3 MB. Velg et mindre bilde for trygg lokal lagring.");e.target.value="";return;}
+      if(!file.type.startsWith("image/")){showToast("Choose an image file.");return;}
+      if(file.size>3*1024*1024){showToast("The image is larger than 3 MB. Choose a smaller image for local storage.");e.target.value="";return;}
       const reader=new FileReader();
       reader.onload=()=>{data.background=reader.result;const ok=saveData();if(ok){applyBackground();closeModal();showToast("Bakgrunn lagret på denne enheten ♡");}else{data.background=null;}};
-      reader.onerror=()=>showToast("Kunne ikke lese bildefilen.");
+      reader.onerror=()=>showToast("Could not read the image file.");
       reader.readAsDataURL(file);
     });
   }
@@ -366,8 +366,8 @@
     timer.remaining=(timer.mode==="focus"?timer.focusMinutes:timer.breakMinutes)*60;
     timer.running=false;timer.endAt=null;saveTimer();updateTimerDisplays();
     if(announce) {
-      showToast(finished==="focus"?"Focus ferdig! Tid for en liten pause ♡":"Pausen er ferdig. Klar for fokus? ♡");
-      try { if("Notification" in window && Notification.permission==="granted") new Notification("Study Space", {body:finished==="focus"?"Fokusøkt ferdig – ta en pause.":"Pausen er ferdig – klar for fokus?"}); } catch (_) {}
+      showToast(finished==="focus"?"Focus complete! Time for a little break ♡":"Break complete. Ready to focus? ♡");
+      try { if("Notification" in window && Notification.permission==="granted") new Notification("Study Space", {body:finished==="focus"?"Focus session complete — take a break.":"Break is over — ready to focus?"}); } catch (_) {}
     }
   }
   function openTimer() {
@@ -394,7 +394,7 @@
     const payload={app:"Study Space",version:1,exportedAt:new Date().toISOString(),data};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`study-space-backup-${todayISO()}.json`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
-    showToast("Sikkerhetskopi eksportert.");
+    showToast("Backup exported.");
   }
   function importBackup(file) {
     if(!file)return;
@@ -403,26 +403,26 @@
       try {
         const parsed=JSON.parse(String(reader.result||""));
         const incoming=parsed?.data||parsed;
-        if(!incoming || !Array.isArray(incoming.subjects)||!Array.isArray(incoming.tasks)||!Array.isArray(incoming.topics)||!Array.isArray(incoming.notes))throw new Error("Filen ser ikke ut til å være en Study Space-sikkerhetskopi.");
-        if(!confirm("Importere sikkerhetskopien? Eksisterende data i Study Space blir erstattet. Eksporter gjerne en kopi først."))return;
+        if(!incoming || !Array.isArray(incoming.subjects)||!Array.isArray(incoming.tasks)||!Array.isArray(incoming.topics)||!Array.isArray(incoming.notes))throw new Error("This file does not appear to be a Study Space backup.");
+        if(!confirm("Import this backup? Existing Study Space data will be replaced. Consider exporting a backup first."))return;
         const previous=data;data={...defaultData(),...incoming};
         if(!saveData()){data=previous;return;}
-        applyBackground();currentPage="overview";currentSubjectId=null;currentNoteId=null;renderPage();showToast("Sikkerhetskopien er importert ♡");
-      }catch(error){showToast("Import feilet: "+error.message);}
+        applyBackground();currentPage="overview";currentSubjectId=null;currentNoteId=null;renderPage();showToast("Backup imported ♡");
+      }catch(error){showToast("Import failed: "+error.message);}
       finally { $("#importFile").value=""; }
     };
-    reader.onerror=()=>showToast("Kunne ikke lese sikkerhetskopien.");
+    reader.onerror=()=>showToast("Could not read the backup file.");
     reader.readAsText(file);
   }
   function deleteSubject(id) {
     const s=subjectById(id);if(!s)return;
-    if(!confirm(`Slette faget «${s.name}» og alle tilhørende oppgaver, temaer og notater? Dette kan ikke angres.`))return;
+    if(!confirm(`Delete faget «${s.name}» og alle tilhørende oppgaver, topics og notater? This cannot be undone.`))return;
     data.subjects=data.subjects.filter(x=>x.id!==id);
     data.tasks=data.tasks.filter(x=>x.subjectId!==id);
     data.topics=data.topics.filter(x=>x.subjectId!==id);
     data.notes=data.notes.filter(x=>x.subjectId!==id);
     if(currentSubjectId===id)currentSubjectId=null;
-    saveData();navigate("subjects");showToast("Faget og tilhørende data er slettet.");
+    saveData();navigate("subjects");showToast("Subject and related data deleted.");
   }
   function showSubjectMenu(id) {
     const s=subjectById(id);if(!s)return;
@@ -453,13 +453,13 @@
       case "open-subject": closeModal(); currentSubjectId=id;subjectTab="tasks";navigate("subject-detail");break;
       case "add-task": showTaskForm(null,subject||null); break;
       case "edit-task": showTaskForm(id); break;
-      case "delete-task": {const t=data.tasks.find(x=>x.id===id);if(t&&confirm(`Slette «${t.title}»?`)){data.tasks=data.tasks.filter(x=>x.id!==id);saveData();renderPage();showToast("Oppgaven er slettet.");}break;}
+      case "delete-task": {const t=data.tasks.find(x=>x.id===id);if(t&&confirm(`Delete “${t.title}”?`)){data.tasks=data.tasks.filter(x=>x.id!==id);saveData();renderPage();showToast("Assignment deleted.");}break;}
       case "add-topic": showTopicForm(subject||null); break;
-      case "delete-topic": {const t=data.topics.find(x=>x.id===id);if(t&&confirm(`Slette temaet «${t.title}»?`)){data.topics=data.topics.filter(x=>x.id!==id);saveData();renderPage();}break;}
+      case "delete-topic": {const t=data.topics.find(x=>x.id===id);if(t&&confirm(`Delete topic «${t.title}»?`)){data.topics=data.topics.filter(x=>x.id!==id);saveData();renderPage();}break;}
       case "new-note": createNote(subject||""); break;
       case "delete-note": deleteNote(id); break;
       case "customize": showCustomize(); break;
-      case "remove-background": data.background=null;saveData();applyBackground();closeModal();showToast("Bakgrunnen er tilbakestilt.");break;
+      case "remove-background": data.background=null;saveData();applyBackground();closeModal();showToast("Background reset.");break;
     }
   });
   document.addEventListener("change", e=>{
@@ -483,7 +483,7 @@
   $("#topTimer").addEventListener("click",openTimer);
   $("#quickNoteBtn").addEventListener("click",()=>createNote(""));
   $("#dateButton").addEventListener("click",()=>{
-    openModal("Your calendar", `<p class="muted">Today is ${new Intl.DateTimeFormat("no-NO",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(new Date())}.</p><div class="panel" style="padding:14px"><h3 style="font:500 20px var(--serif)">Upcoming dates</h3>${visibleDeadlines("upcoming").length?`<div class="deadline-list">${visibleDeadlines("upcoming").slice(0,8).map(deadlineHTML).join("")}</div>`:'<p class="muted">Ingen kommende frister ennå. Legg til en oppgave eller eksamensdato for å fylle kalenderoversikten.</p>'}</div><div class="form-actions"><button class="button button-primary" data-close-modal>Close</button></div>`);
+    openModal("Your calendar", `<p class="muted">Today is ${new Intl.DateTimeFormat("no-NO",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(new Date())}.</p><div class="panel" style="padding:14px"><h3 style="font:500 20px var(--serif)">Upcoming dates</h3>${visibleDeadlines("due").filter(item => item.date >= todayISO()).length?`<div class="deadline-list">${visibleDeadlines("due").filter(item => item.date >= todayISO()).slice(0,8).map(deadlineHTML).join("")}</div>`:'<p class="muted">No upcoming deadlines yet. Add an assignment or exam date to see them here.</p>'}</div><div class="form-actions"><button class="button button-primary" data-close-modal>Close</button></div>`);
   });
   $("#exportBtn").addEventListener("click",exportBackup);
   $("#importBtn").addEventListener("click",()=>$("#importFile").click());
@@ -492,7 +492,7 @@
   window.addEventListener("error",e=>{
     const fatal=$("#fatalError");
     if(fatal && !$("#pageContent").innerHTML){fatal.hidden=false;$("#fatalMessage").textContent="En uventet feil hindret oppstart. Prøv å laste siden på nytt. Feil: "+(e.message||"ukjent JavaScript-feil");}
-    setSaveStatus("error","Appfeil – kontroller konsollen");
+    setSaveStatus("error","App error — check console");
   });
 
   // Load all saved content before the first Overview render.
@@ -506,6 +506,6 @@
     setInterval(timerTick,250);
   } catch(error) {
     $("#fatalError").hidden=false;
-    $("#fatalMessage").textContent="Study Space kunne ikke starte: "+error.message;
+    $("#fatalMessage").textContent="Study Space could not start: "+error.message;
   }
 })();

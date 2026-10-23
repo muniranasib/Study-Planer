@@ -185,3 +185,14 @@ h1 .heart { color: var(--pink); padding-left: 5px; }
   .detail-hero { padding: 18px; }.detail-hero h1 { font-size: 31px; }.timer-ring { width: 185px; height: 185px; }.timer-time { font-size: 40px; }.modal { padding: 17px; }.footer-note { padding-top: 24px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *:before, *:after { scroll-behavior: auto !important; transition: none !important; } }
+
+/* Subject-specific pastel accents; all colours stay within the Study Space palette. */
+.subject-card.subject-color-rose { --subject-accent: #b78399; --subject-soft: #f5e8ee; }
+.subject-card.subject-color-lilac { --subject-accent: #9a88b8; --subject-soft: #eee9f7; }
+.subject-card.subject-color-blue { --subject-accent: #7f9eb8; --subject-soft: #e8f0f6; }
+.subject-card.subject-color-sage { --subject-accent: #8da590; --subject-soft: #eaf1eb; }
+.subject-card.subject-color-peach { --subject-accent: #c9957e; --subject-soft: #f8ece5; }
+.subject-card.subject-color-butter { --subject-accent: #b6a064; --subject-soft: #f6f1df; }
+.subject-card:before { background: var(--subject-accent, var(--pink)); }
+.subject-card .subject-symbol { color: var(--subject-accent, var(--pink-dark)); background: var(--subject-soft, var(--surface-2)); }
+.subject-card .progress-fill { background: var(--subject-accent, var(--pink)); }
