@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f3f1">
+  <meta name="description" content="Study Space – en myk og oversiktlig studieplanlegger for hele semesteret.">
+  <title>Study Space</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <aside class="sidebar">
+      <a class="brand" href="#overview" aria-label="Study Space – Overview">
+        <span class="brand-mark">♡</span>
+        <span><strong>Study Space</strong><small>your semester, softly</small></span>
+      </a>
+      <nav class="nav-list" aria-label="Hovedmeny">
+        <button class="nav-link active" data-page="overview"><span>⌂</span> Overview</button>
+        <button class="nav-link" data-page="subjects"><span>▤</span> My subjects</button>
+        <button class="nav-link" data-page="deadlines"><span>▦</span> Deadlines</button>
+        <button class="nav-link" data-page="notes"><span>✎</span> Notes</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="gentle-card"><span class="flower">✿</span><p>Small steps every day lead to big results.</p><small>— your gentle reminder</small></div>
+        <button class="focus-card" id="sidebarTimer" aria-label="Åpne Pomodoro-timer">
+          <span class="focus-clock">◷</span>
+          <span class="focus-copy"><strong>Focus time</strong><small id="timerStatusSide">Ready for a little focus?</small><b id="timerDisplaySide">25:00</b></span>
+          <span class="focus-arrow">↗</span>
+        </button>
+        <div class="backup-actions">
+          <button class="button button-small button-quiet" id="exportBtn">Export backup</button>
+          <button class="button button-small button-quiet" id="importBtn">Import backup</button>
+          <input type="file" id="importFile" accept=".json,application/json" hidden>
+        </div>
+        <div class="save-status" id="saveStatus"><span class="status-dot"></span><span>Saved on this device</span></div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="breadcrumb" id="breadcrumb">MY SPACE / OVERVIEW</div>
+        <div class="top-actions">
+          <button class="icon-button date-button" id="dateButton" aria-label="Vis dato og kalender" title="Dato og kalender"><span>▦</span><span id="todayLabel"></span></button>
+          <button class="icon-button" id="quickNoteBtn" aria-label="Nytt notat" title="Nytt notat">✎</button>
+          <button class="icon-button icon-button-filled" id="topTimer" aria-label="Åpne Pomodoro-timer" title="Pomodoro-timer">◷</button>
+        </div>
+      </header>
+      <section id="pageContent" class="page-content" aria-live="polite"></section>
+      <footer class="footer-note">Made for your next little step ♡</footer>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head"><h2 id="modalTitle">Study Space</h2><button class="icon-button modal-close" id="modalClose" aria-label="Lukk">×</button></div>
+      <div id="modalBody"></div>
+    </section>
+  </div>
+  <div id="fatalError" class="fatal-error" hidden>
+    <h1>Study Space kunne ikke starte</h1>
+    <p id="fatalMessage">Prøv å laste siden på nytt. Dataene dine blir ikke slettet.</p>
+    <button class="button button-primary" onclick="location.reload()">Prøv igjen</button>
+  </div>
+</body>
+</html>
